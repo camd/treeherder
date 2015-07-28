@@ -190,16 +190,16 @@ treeherder.directive('thCloneJobs', [
          * @param el
          */
         var clickGroupCb = function(el) {
+            var expandState;
             var gi = getGroupInfo(el);
             if (gi) {
+                expandState = gi.jobGrpList.attr("data-group-state") || $location.search().group_state || "collapsed";
                 gi.jobGrpList.empty();
-                if (gi.jobGrpList.attr("data-group-state") === "expanded") {
+                if (expandState === "expanded") {
                     gi.jobGrpList.attr("data-group-state", "collapsed");
-//                    gi.jgObj.groupState = "collapsed";
                     addGroupJobBtnEls(gi.jgObj, gi.jobGrpList);
                 } else {
                     gi.jobGrpList.attr("data-group-state", "expanded");
-//                    gi.jgObj.groupState = "expanded";
                     addJobBtnEls(gi.jgObj, gi.jobGrpList);
                 }
             }
@@ -305,7 +305,8 @@ treeherder.directive('thCloneJobs', [
          * Group most resultStates as just counts.  Keep "failed" as job-btns
          */
         var addGroupJobBtnEls = function(jgObj, jobGrpList) {
-            var ct, job, jobBtn, jobCountBtn, l;
+            var ct, job, jobCountBtn, l;
+            var countAdded = false;
             var jobsShown = 0;
             var jobCountBtnArray = [];
             var jobBtnArray = [];
@@ -356,6 +357,7 @@ treeherder.directive('thCloneJobs', [
                     addJobBtnToArray(countInfo.lastJob, lastJobSelected, jobBtnArray);
                 } else {
                     // with more than 1 job for the status, add it as a count
+                    countAdded = true;
                     countInfo.value = countInfo.count;
                     countInfo.title = countInfo.count + " " + countInfo.countText;
                     countInfo.btnClass = countInfo.btnClass + "-count";
@@ -368,8 +370,7 @@ treeherder.directive('thCloneJobs', [
 
             jobGrpList.append(jobBtnArray);
 
-            if (_.size(stateCounts) > 0) {
-                console.log("adding some counts", jobGrpList);
+            if (countAdded) {
                 var jobCountListBtn = $(jobGroupCountListInterpolator());
                 jobCountListBtn.append(jobCountBtnArray);
                 jobGrpList.append(jobCountListBtn);

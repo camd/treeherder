@@ -261,9 +261,9 @@ treeherder.factory('ThResultSetStore', [
             return 'key' + job.id;
         };
 
-        var getGroupMapKey = function(grName, plName, plOpt) {
+        var getGroupMapKey = function(result_set_id, grName, plName, plOpt) {
             //Build hash key for groupMap entires
-            return thAggregateIds.escape(grName + plName + plOpt);
+            return thAggregateIds.escape(result_set_id + grName + plName + plOpt);
         };
 
         var getSelectedJob = function(repoName){
@@ -336,7 +336,7 @@ treeherder.factory('ThResultSetStore', [
                 // groups
                 for (var gp_i = 0; gp_i < pl_obj.groups.length; gp_i++) {
                     var gr_obj = pl_obj.groups[gp_i];
-                    gr_obj.mapKey = getGroupMapKey(gr_obj.name, pl_obj.name, pl_obj.option);
+                    gr_obj.mapKey = getGroupMapKey(rs_obj.id, gr_obj.name, pl_obj.name, pl_obj.option);
 
                     var grMapElement = {
                         grp_obj: gr_obj,
@@ -909,7 +909,7 @@ treeherder.factory('ThResultSetStore', [
 
             var name = job.job_group_name;
             var symbol = job.job_group_symbol;
-            var mapKey = getGroupMapKey(name, job.platform, job.platform_option);
+            var mapKey = getGroupMapKey(job.result_set_id, name, job.platform, job.platform_option);
 
             if (job.tier && job.tier !== 1) {
                 if (symbol === "?") {

@@ -599,6 +599,7 @@ th-watched-repo {
   padding: 0 2px 0 2px;
   vertical-align: 0;
   line-height: 1.32;
+  cursor: pointer;
 }
 .platform-group.group-btn:hover {
     background-color: rgba(208, 228, 250, 0.51);
