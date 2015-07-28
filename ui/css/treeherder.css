@@ -620,6 +620,9 @@ th-watched-repo {
     /*border-width: 1px;*/
     font-style: italic;
 }
+.group-count-list::before {
+    content: ">";
+}
 .group-count-list:hover,
 /*.group-btn:hover {*/
     /*border-color: rgb(181, 200, 222);*/

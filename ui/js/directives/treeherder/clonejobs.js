@@ -214,10 +214,9 @@ treeherder.directive('thCloneJobs', [
             var jobsShown = 0;
 
             var lastJobSelected = ThResultSetStore.getSelectedJob($rootScope.repoName);
-            var job, jobBtn, l;
+            var job, l;
             var jobBtnArray = [];
 
-//            .removeClass("collapsed");
             var icon = jobTdEl.siblings(".group-count-list-icon");
             icon.addClass("fa-minus-square-o");
             icon.removeClass("fa-plus-square-o");
@@ -230,8 +229,6 @@ treeherder.directive('thCloneJobs', [
                 job.searchStr = thJobSearchStr(job) + ' ' + job.ref_data_name  + ' ' +
                     job.signature;
 
-                //Make sure that filtering doesn't effect the resultset counts
-                //displayed
                 if(thJobFilters.showJob(job) === false){
                     //Keep track of visibility with this property. This
                     //way down stream job consumers don't need to repeatedly
@@ -242,19 +239,14 @@ treeherder.directive('thCloneJobs', [
                     job.visible = true;
                 }
 
-                jobBtn = createJobBtn(job, lastJobSelected);
-                jobBtnArray.push(jobBtn);
-                // add a zero-width space between spans so they can wrap
-                jobBtnArray.push(' ');
-
-
+                addJobBtnToArray(job, lastJobSelected, jobBtnArray);
             }
             jobTdEl.append(jobBtnArray);
 
             return jobsShown;
         };
 
-        var createJobBtn = function(job, lastJobSelected) {
+        var addJobBtnToArray = function(job, lastJobSelected, jobBtnArray) {
             var hText, key, resultState, jobStatus, jobBtn, l;
 
             hText = getHoverText(job);
@@ -287,6 +279,10 @@ treeherder.directive('thCloneJobs', [
                     $rootScope.repoName, jobBtn, job);
             }
             showHideJob(jobBtn, job.visible);
+
+            jobBtnArray.push(jobBtn);
+            // add a zero-width space between spans so they can wrap
+            jobBtnArray.push(' ');
 
             return jobBtn;
         };
@@ -328,7 +324,7 @@ treeherder.directive('thCloneJobs', [
 
                 //Set the resultState
                 var resultStatus = thResultStatus(job);
-                var rsInfo = thResultStatusInfo(resultStatus,
+                var countInfo = thResultStatusInfo(resultStatus,
                                                 job.failure_classification_id);
 
                 //Make sure that filtering doesn't effect the resultset counts
@@ -336,35 +332,44 @@ treeherder.directive('thCloneJobs', [
                 if (thJobFilters.showJob(job)) {
                     if (_.contains(failResults, resultStatus) && job.failure_classification_id === 1) {
                         // render the job itself, not a count
-                        job.visible = true;
-                        jobBtn = createJobBtn(job, lastJobSelected);
-                        jobBtnArray.push(jobBtn);
-                        // add a zero-width space between spans so they can wrap
-                        jobBtnArray.push(' ');
+                        addJobBtnToArray(job, lastJobSelected, jobBtnArray);
                     } else {
-                        ct = _.get(_.get(stateCounts, rsInfo.btnClass, rsInfo),
+                        ct = _.get(_.get(stateCounts, countInfo.btnClass, countInfo),
                                    "count", 0);
-                        rsInfo.count = ct+1;
-                        stateCounts[rsInfo.btnClass] = rsInfo;
+                        countInfo.count = ct+1;
+                        // keep a reference to the job.  If there ends up being
+                        // only one for this status, then just add the job itself
+                        // rather than a count.
+                        countInfo.lastJob = job;
+                        stateCounts[countInfo.btnClass] = countInfo;
                     }
 
+                    job.visible = true;
                     jobsShown++;
                 }
             }
 
+            _.forEach(stateCounts, function(countInfo) {
+                if (countInfo.count === 1) {
+                    // if there is only 1 job for this status, then just add
+                    // the job, rather than the count
+                    addJobBtnToArray(countInfo.lastJob, lastJobSelected, jobBtnArray);
+                } else {
+                    // with more than 1 job for the status, add it as a count
+                    countInfo.value = countInfo.count;
+                    countInfo.title = countInfo.count + " " + countInfo.countText;
+                    countInfo.btnClass = countInfo.btnClass + "-count";
+                    jobCountBtn = $(jobGroupCountInterpolator(countInfo));
+                    jobCountBtnArray.push(jobCountBtn);
+                    jobCountBtnArray.push(' ');
+                    showHideJob(jobCountBtn, true);
+                }
+            });
+
             jobGrpList.append(jobBtnArray);
 
-            _.forEach(stateCounts, function(jobStatus) {
-                jobStatus.value = jobStatus.count;
-                jobStatus.title = jobStatus.count + " " + jobStatus.countText;
-                jobStatus.btnClass = jobStatus.btnClass + "-count";
-                jobCountBtn = $(jobGroupCountInterpolator(jobStatus));
-                jobCountBtnArray.push(jobCountBtn);
-                jobCountBtnArray.push(' ');
-                showHideJob(jobCountBtn, true);
-
-            });
-            if (_.size(stateCounts)) {
+            if (_.size(stateCounts) > 0) {
+                console.log("adding some counts", jobGrpList);
                 var jobCountListBtn = $(jobGroupCountListInterpolator());
                 jobCountListBtn.append(jobCountBtnArray);
                 jobGrpList.append(jobCountListBtn);
